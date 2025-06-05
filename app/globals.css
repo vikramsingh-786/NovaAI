@@ -1,0 +1,182 @@
+@import "tailwindcss";
+:root {
+  --background-primary: theme('colors.slate.900');
+  --background-secondary: theme('colors.purple.900');
+  --background-accent: theme('colors.slate.800'); 
+  --text-primary: theme('colors.white');
+  --text-secondary: theme('colors.slate.300');
+  --text-muted: theme('colors.slate.400');
+  --border-primary: theme('colors.slate.700');
+  --border-accent: theme('colors.purple.500');
+  --accent-purple: theme('colors.purple.400');
+  --accent-blue: theme('colors.blue.400');
+  --gradient-start: theme('colors.purple.600');
+  --gradient-end: theme('colors.blue.600');
+  --hero-gradient-from: theme('colors.white');
+  --hero-gradient-via: theme('colors.purple.200');
+  --hero-gradient-to: theme('colors.blue.200');
+  --hero-highlight-from: theme('colors.purple.400');
+  --hero-highlight-to: theme('colors.blue.400');
+  --navbar-bg: theme('colors.slate.900/80');
+  --card-bg: theme('colors.slate.800/50');
+  --button-text: theme('colors.white');
+  --blob1-color: theme('colors.purple.500');
+  --blob2-color: theme('colors.blue.500');
+  --blob3-color: theme('colors.pink.500');
+
+   --shadow-color: rgba(0,0,0,0.15);
+  --shadow-color-soft: rgba(0,0,0,0.07);
+  --shadow-color-softer: rgba(0,0,0,0.05);
+  --shadow-color-medium: rgba(0,0,0,0.1);
+
+  --code-block-bg: theme('colors.slate.800');
+  --code-block-border: theme('colors.slate.700');
+  --code-block-header-bg: theme('colors.slate.700');
+  --code-block-header-text: theme('colors.slate.300');
+  --code-block-copy-hover-bg: theme('colors.slate.600');
+  --code-block-text: theme('colors.slate.200');
+  --code-block-streaming-text: theme('colors.slate.500');
+  --code-line-number-color: #777;
+
+  --user-bubble-gradient-from: theme('colors.purple.600');
+  --user-bubble-gradient-to: theme('colors.blue.600');
+  --user-bubble-text: theme('colors.white');
+  --assistant-bubble-bg: theme('colors.slate.100'); 
+  --assistant-bubble-border: theme('colors.slate.200');
+  --assistant-bubble-text: theme('colors.slate.800');
+  --assistant-bubble-bg-dark: theme('colors.slate.800');
+  --assistant-bubble-border-dark: theme('colors.slate.700');
+  --assistant-bubble-text-dark: theme('colors.slate.100');
+}
+
+html[data-theme="light"] {
+  --background-primary: theme('colors.slate.50');
+  --background-secondary: theme('colors.sky.100');
+  --background-accent: theme('colors.white');
+  --text-primary: theme('colors.slate.900');
+  --text-secondary: theme('colors.slate.700');
+  --text-muted: theme('colors.slate.500');
+  --border-primary: theme('colors.slate.300');
+  --border-accent: theme('colors.indigo.500');
+  --accent-purple: theme('colors.indigo.500'); 
+  --accent-blue: theme('colors.sky.500'); 
+  --gradient-start: theme('colors.indigo.600');
+  --gradient-end: theme('colors.sky.600');
+  --hero-gradient-from: theme('colors.slate.800');
+  --hero-gradient-via: theme('colors.indigo.500');
+  --hero-gradient-to: theme('colors.sky.500');
+  --hero-highlight-from: theme('colors.indigo.600');
+  --hero-highlight-to: theme('colors.sky.600');
+  --navbar-bg: theme('colors.white/80');
+  --card-bg: theme('colors.white/50');
+  --button-text: theme('colors.white');
+
+  --blob1-color: theme('colors.indigo.300');
+  --blob2-color: theme('colors.sky.300');
+  --blob3-color: theme('colors.pink.300');
+
+    --shadow-color: rgba(100,100,150,0.15);
+  --shadow-color-soft: rgba(50,50,93,0.07);
+  --shadow-color-softer: rgba(0,0,0,0.05);
+  --shadow-color-medium: rgba(50,50,93,0.1);
+
+  --code-block-bg: theme('colors.slate.50'); 
+  --code-block-border: theme('colors.slate.200');
+  --code-block-header-bg: theme('colors.slate.100');
+  --code-block-header-text: theme('colors.slate.700');
+  --code-block-copy-hover-bg: theme('colors.slate.200');
+  --code-block-text: theme('colors.slate.900');
+  --code-block-streaming-text: theme('colors.slate.600');
+  --code-line-number-color: #888;
+
+  --user-bubble-gradient-from: theme('colors.indigo.500');
+  --user-bubble-gradient-to: theme('colors.sky.500');
+  --user-bubble-text: theme('colors.white');
+  --assistant-bubble-bg: theme('colors.white'); 
+  --assistant-bubble-border: theme('colors.slate.300');
+  --assistant-bubble-text: theme('colors.slate.900');
+}
+
+html[data-theme="deepDark"] {
+  --background-primary: theme('colors.black');
+  --background-secondary: theme('colors.gray.900'); 
+  --background-accent: theme('colors.gray.800');
+  --text-primary: theme('colors.gray.200');
+  --text-secondary: theme('colors.gray.400');
+  --text-muted: theme('colors.gray.500');
+  --border-primary: theme('colors.gray.700');
+  --border-accent: theme('colors.teal.500'); 
+  --accent-purple: theme('colors.teal.400');
+  --accent-blue: theme('colors.cyan.400');
+  --gradient-start: theme('colors.teal.600');
+  --gradient-end: theme('colors.cyan.600');
+  --hero-gradient-from: theme('colors.gray.100');
+  --hero-gradient-via: theme('colors.teal.300');
+  --hero-gradient-to: theme('colors.cyan.300');
+  --hero-highlight-from: theme('colors.teal.500');
+  --hero-highlight-to: theme('colors.cyan.500');
+  --navbar-bg: theme('colors.black/80');
+  --card-bg: theme('colors.gray.800/50');
+  --button-text: theme('colors.white');
+
+  --blob1-color: theme('colors.teal.700');
+  --blob2-color: theme('colors.cyan.700');
+  --blob3-color: theme('colors.emerald.700');
+
+    --shadow-color: rgba(80,200,220,0.1);
+  --shadow-color-soft: rgba(180,220,255,0.03);   
+  --shadow-color-softer: rgba(180,220,255,0.02); 
+  --shadow-color-medium: rgba(180,220,255,0.05); 
+
+   --code-block-bg: theme('colors.black');
+  --code-block-border: theme('colors.gray.800'); 
+  --code-block-header-bg: theme('colors.gray.900'); 
+  --code-block-header-text: theme('colors.gray.400');
+  --code-block-copy-hover-bg: theme('colors.gray.700');
+  --code-block-text: theme('colors.gray.300');
+  --code-block-streaming-text: theme('colors.gray.500');
+  --code-line-number-color: #555; 
+
+  --user-bubble-gradient-from: theme('colors.teal.700');
+  --user-bubble-gradient-to: theme('colors.cyan.700');
+  --user-bubble-text: theme('colors.white');
+  --assistant-bubble-bg: theme('colors.gray.900');
+  --assistant-bubble-border: theme('colors.gray.700');
+  --assistant-bubble-text: theme('colors.gray.200');
+  --assistant-bubble-bg-dark: theme('colors.gray.900');
+  --assistant-bubble-border-dark: theme('colors.gray.700');
+  --assistant-bubble-text-dark: theme('colors.gray.200');
+}
+body {
+  color: var(--text-primary);
+  background: var(--background-primary); 
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background-accent);
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-accent);
+  border-radius: 10px;
+  border: 2px solid var(--background-accent);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gradient-start);
+}
+
+.theme-transition {
+  transition-property: color, background-color, border-color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
