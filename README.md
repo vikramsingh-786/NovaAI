@@ -1,6 +1,8 @@
 # NovaAI - Your Intelligent Chat Companion
 
 ![NovaAI Hero](public/hero.png)
+![Chat Interface](public/Homepage.png)
+![Mobile View](public/dashboard.png)
 
 NovaAI is a modern, responsive, and feature-rich AI chat application, similar to platforms like ChatGPT or Deepseek. It's built with Next.js, TypeScript, Tailwind CSS, and leverages Google's Gemini AI for its conversational capabilities. It includes user authentication via Clerk, chat history management with MongoDB, and subscription handling with Stripe.
 
