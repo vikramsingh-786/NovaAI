@@ -3,7 +3,7 @@
 ![NovaAI Hero](public/hero.png)
 
 <div align="center">
-  <img src="public/Homepage.png" alt="Homepage" width="50%" />
+  <img src="public/Homepage.png" alt="Homepage" width="50%" marginBottom="10%" />
 </div>
 
 ![Mobile View](public/dashboard.png)
