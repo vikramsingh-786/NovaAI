@@ -1,32 +1,42 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getAIResponseStream } from '@/lib/aiService';
-import formidable, { File as FormidableFile } from 'formidable';
+import formidable, { File as FormidableFile, Fields, Files } from 'formidable';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
+interface FormidableFileAdapter {
+  size: number;
+  filepath: string;
+  originalFilename: string | null;
+  newFilename: string;
+  mimetype: string | null;
+  mtime: Date | null;
+  toJSON: () => object;
+}
+
 async function parseFormData(req: NextRequest): Promise<{
-  fields: formidable.Fields<string>;
-  files: formidable.Files<string>;
+  fields: Fields<string>;
+  files: Files<string>;
 }> {
   const formData = await req.formData();
-  const fields: formidable.Fields<string> = {};
-  const files: formidable.Files<string> = {};
+  const fields: Fields<string> = {};
+  const files: Files<string> = {};
 
   for (const [key, value] of formData.entries()) {
     if (value instanceof File) {
       const tempFilePath = path.join(os.tmpdir(), `upload_${Date.now()}_${value.name}`);
       await fs.writeFile(tempFilePath, Buffer.from(await value.arrayBuffer()));
 
-      const formidableFileAdapter = {
+      const formidableFileAdapter: FormidableFileAdapter = {
         size: value.size,
         filepath: tempFilePath,
         originalFilename: value.name,
         newFilename: path.basename(tempFilePath),
         mimetype: value.type,
         mtime: new Date(value.lastModified),
-        toJSON: function(): object { 
+        toJSON: function(): object {
           return {
             size: this.size,
             filepath: this.filepath,
@@ -38,7 +48,7 @@ async function parseFormData(req: NextRequest): Promise<{
         },
       };
 
-      const castedFile = formidableFileAdapter as FormidableFile;
+      const castedFile = formidableFileAdapter as unknown as FormidableFile;
 
       const currentFilesForKey = files[key];
       if (Array.isArray(currentFilesForKey)) {
@@ -50,7 +60,7 @@ async function parseFormData(req: NextRequest): Promise<{
       const currentFieldsForKey = fields[key];
       if (Array.isArray(currentFieldsForKey)) {
         currentFieldsForKey.push(value);
-      } else if (currentFieldsForKey) {
+      } else if (currentFieldsForKey !== undefined) {
          fields[key] = [currentFieldsForKey, value];
       }
       else {
@@ -69,7 +79,10 @@ export async function POST(req: NextRequest) {
     const userInput = fields.message?.[0] || "";
     const historyString = fields.conversationHistory?.[0] || "[]";
     const uploadedFileArray = files.file;
-    const uploadedFile: FormidableFile | undefined = Array.isArray(uploadedFileArray) ? uploadedFileArray[0] : undefined;
+    
+    const uploadedFile: FormidableFile | undefined = Array.isArray(uploadedFileArray) 
+        ? uploadedFileArray[0] 
+        : uploadedFileArray;
 
 
     if (!userInput && !uploadedFile) {
@@ -79,8 +92,8 @@ export async function POST(req: NextRequest) {
     let conversationHistory: Array<{ type: "user" | "assistant"; content: string }> = [];
     try {
       conversationHistory = JSON.parse(historyString) as Array<{ type: "user" | "assistant"; content: string }>;
-    } catch (e) {
-      console.error("Could not parse conversation history:", e);
+    } catch (e: unknown) {
+      console.error("Could not parse conversation history:", e instanceof Error ? e.message : e);
     }
     
     let tempFilePathToClean: string | null = null;
@@ -103,16 +116,23 @@ export async function POST(req: NextRequest) {
           );
           
           controller.close();
-        } catch (error: any) {
-          const errorPayload = JSON.stringify({ error: "An error occurred in the API route.", details: error.message });
+        } catch (error: unknown) {
+          let detailMessage = "Unknown error during stream generation";
+          if (error instanceof Error) {
+            detailMessage = error.message;
+          } else if (typeof error === 'string') {
+            detailMessage = error;
+          }
+          const errorPayload = JSON.stringify({ error: "An error occurred in the API route.", details: detailMessage });
+          console.error('Error during AI stream generation in route:', error);
           controller.enqueue(new TextEncoder().encode(errorPayload));
           controller.close();
         } finally {
             if (tempFilePathToClean) {
                 try {
                     await fs.unlink(tempFilePathToClean);
-                } catch (cleanupError) {
-                    console.error("Error cleaning up temp file:", tempFilePathToClean, cleanupError);
+                } catch (cleanupError: unknown) {
+                    console.error("Error cleaning up temp file:", tempFilePathToClean, cleanupError instanceof Error ? cleanupError.message : cleanupError);
                 }
             }
         }
@@ -127,15 +147,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     let errorMessage = 'Failed to process chat request';
-    if (error instanceof Error) errorMessage = error.message;
+    if (error instanceof Error) {
+        errorMessage = error.message;
+    } else if (typeof error === 'string') {
+        errorMessage = error;
+    }
+    console.error('Error in POST /api/chat (outer):', error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
+// This is the Next.js Edge API Route configuration
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false, // Correct for manual FormData parsing
+  }, // <--- FIXED: Ensure this curly brace closes the 'api' object
 };

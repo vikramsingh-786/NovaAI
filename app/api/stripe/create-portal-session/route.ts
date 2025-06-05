@@ -1,7 +1,9 @@
+// app/api/stripe/create-portal-session/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { stripe } from "@/lib/stripe";
 import { getUserByClerkId } from "@/lib/mongo";
+import Stripe from "stripe"; // Import Stripe for its error types
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { returnUrl } = await req.json();
+    // Type the request body
+    const body: { returnUrl?: string } = await req.json();
+    const { returnUrl } = body;
+
     if (!returnUrl) {
       return NextResponse.json({ error: "Missing returnUrl" }, { status: 400 });
     }
@@ -31,9 +36,26 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: portalSession.url });
-  } catch (error: any) {
+
+  } catch (error: unknown) { // <--- FIXED: Use `unknown`
+    let errorMessage = "Failed to create portal session";
+    let errorType = "UnknownPortalError";
+
+    if (error instanceof Stripe.errors.StripeError) {
+      errorMessage = `Stripe error: ${error.message}`;
+      errorType = error.type;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+      errorType = error.name;
+    }
+    
+    console.error(
+        "STRIPE_PORTAL_SESSION_ERROR:",
+        { type: errorType, message: errorMessage, originalError: error }
+      );
+
     return NextResponse.json(
-      { error: error.message || "Failed to create portal session" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

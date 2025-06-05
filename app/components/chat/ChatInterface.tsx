@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from 'next/image';
 import {
   Send,
   Mic,
@@ -28,6 +28,7 @@ import {
   DEFAULT_CHAT_TITLE,
 } from "@/hooks/useChat";
 
+// --- TypeScript Definitions for Web Speech API (FIXED 'any' to 'void') ---
 interface SpeechRecognitionEvent extends Event {
   readonly resultIndex: number;
   readonly results: SpeechRecognitionResultList;
@@ -54,32 +55,32 @@ interface CustomSpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   abort(): void;
-  onaudiostart: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onaudioend: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
+  onaudiostart: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onaudioend: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
   onerror:
     | ((
         this: CustomSpeechRecognition,
         ev: Event & Partial<SpeechRecognitionErrorEventDetails>
-      ) => any)
+      ) => void)
     | null;
   onnomatch:
-    | ((this: CustomSpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | ((this: CustomSpeechRecognition, ev: SpeechRecognitionEvent) => void)
     | null;
   onresult:
-    | ((this: CustomSpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | ((this: CustomSpeechRecognition, ev: SpeechRecognitionEvent) => void)
     | null;
-  onsoundstart: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onsoundend: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onspeechstart: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onspeechend: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
-  onstart: ((this: CustomSpeechRecognition, ev: Event) => any) | null;
+  onsoundstart: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onsoundend: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onspeechstart: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onspeechend: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
+  onstart: ((this: CustomSpeechRecognition, ev: Event) => void) | null;
   addEventListener<K extends keyof SpeechRecognitionEventMap>(
     type: K,
     listener: (
       this: CustomSpeechRecognition,
       ev: SpeechRecognitionEventMap[K]
-    ) => any,
+    ) => void,
     options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
@@ -92,7 +93,7 @@ interface CustomSpeechRecognition extends EventTarget {
     listener: (
       this: CustomSpeechRecognition,
       ev: SpeechRecognitionEventMap[K]
-    ) => any,
+    ) => void,
     options?: boolean | EventListenerOptions
   ): void;
   removeEventListener(
@@ -140,10 +141,9 @@ declare global {
     readonly transcript: string;
     readonly confidence: number;
   }
-  interface SpeechGrammarList {
-    /* ... */
-  }
+  type SpeechGrammarList = Record<string, unknown>; // Represent as an object type
 }
+// --- End TypeScript Definitions ---
 
 export default function ChatInterface() {
   const {
@@ -182,7 +182,6 @@ export default function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { isProUser, isLoading: isSubscriptionLoading } = useSubscription();
-  const router = useRouter();
 
   const scrollToBottom = useCallback(() => {
     setTimeout(
@@ -205,14 +204,39 @@ export default function ChatInterface() {
         scrollHeight,
         maxHeight
       )}px`;
-      if (scrollHeight > maxHeight)
+      if (scrollHeight > maxHeight) {
         textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+      }
     }
   }, [inputValue]);
 
   useEffect(() => {
     contextLoadChats();
   }, [contextLoadChats]);
+
+
+  const onCancelRename = useCallback(() => {
+    setRenamingChatId(null);
+    setRenamingTitleInput("");
+  }, []); // setRenamingChatId & setRenamingTitleInput are stable
+
+  const handleSubmit = useCallback(async (promptFromMic?: string) => {
+    const textToSubmit = promptFromMic || inputValue;
+    if (!textToSubmit.trim() && !selectedFile) return;
+    if (isAISendingReceiving || (isListening && !promptFromMic)) return;
+    if (renamingChatId) onCancelRename();
+
+    await contextSendMessage(textToSubmit.trim(), selectedFile || undefined);
+    setInputValue("");
+    if (selectedFile) { // Only clear if a file was actually part of the submission
+        setSelectedFile(null);
+        setFilePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  }, [inputValue, selectedFile, isAISendingReceiving, isListening, renamingChatId, contextSendMessage, onCancelRename]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -230,15 +254,18 @@ export default function ChatInterface() {
           let interimTranscript = "";
           let finalTranscript = "";
           for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal)
+            if (event.results[i].isFinal) {
               finalTranscript += event.results[i][0].transcript;
-            else interimTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
           }
           const currentTranscript = finalTranscript || interimTranscript;
           setInputValue(currentTranscript);
 
-          if (autoSubmitTimerRef.current)
+          if (autoSubmitTimerRef.current) {
             clearTimeout(autoSubmitTimerRef.current);
+          }
           if (currentTranscript.trim()) {
             const isFinalResult =
               event.results[event.results.length - 1].isFinal;
@@ -260,28 +287,24 @@ export default function ChatInterface() {
           const errorCode = event.error || "unknown error";
           const eventMessage = event.message || "";
           console.error(
-            "Speech recognition error code:",
-            errorCode,
-            "Message:",
-            eventMessage
+            "Speech recognition error code:", errorCode, "Message:", eventMessage
           );
-          if (autoSubmitTimerRef.current)
+          if (autoSubmitTimerRef.current) {
             clearTimeout(autoSubmitTimerRef.current);
+          }
           let errorMessageText = "Speech recognition error.";
-          if (errorCode === "no-speech")
-            errorMessageText = "No speech detected.";
-          else if (errorCode === "audio-capture")
-            errorMessageText = "Microphone problem.";
-          else if (errorCode === "not-allowed")
-            errorMessageText = "Microphone permission denied.";
+          if (errorCode === "no-speech") errorMessageText = "No speech detected.";
+          else if (errorCode === "audio-capture") errorMessageText = "Microphone problem.";
+          else if (errorCode === "not-allowed") errorMessageText = "Microphone permission denied.";
           else if (eventMessage) errorMessageText = eventMessage;
           toast.error(errorMessageText);
           setIsListening(false);
         };
         recognitionInstance.onend = () => {
           setIsListening(false);
-          if (autoSubmitTimerRef.current)
+          if (autoSubmitTimerRef.current) {
             clearTimeout(autoSubmitTimerRef.current);
+          }
         };
         speechRecognitionRef.current = recognitionInstance;
       }
@@ -291,12 +314,16 @@ export default function ChatInterface() {
       if (speechRecognitionRef.current && isListening) {
         try {
           speechRecognitionRef.current.stop();
-        } catch (e) {
-          /* ignore */
-        }
+        } catch (_e: unknown) { /* ignore */ }
       }
     };
-  }, [isListening, isAISendingReceiving]);
+  }, [isListening, isAISendingReceiving, handleSubmit]); // Added handleSubmit
+
+  const clearSelectedFile = useCallback(() => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []); // set... functions from useState are stable
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -308,21 +335,12 @@ export default function ChatInterface() {
         return;
       }
       const allowedDocTypes = [
-        "application/pdf",
-        "text/plain",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/pdf", "text/plain",
+        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       ];
-      const allowedImageTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
+      const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
       if (![...allowedDocTypes, ...allowedImageTypes].includes(file.type)) {
-        toast.error(
-          "Unsupported file. Use PDF, TXT, DOC(X), PNG, JPG, GIF, WEBP."
-        );
+        toast.error("Unsupported file. Use PDF, TXT, DOC(X), PNG, JPG, GIF, WEBP.");
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
@@ -330,15 +348,8 @@ export default function ChatInterface() {
         toast.info(
           <div>
             File attachments are a Pro feature.{" "}
-            <Link
-              href="/pricing"
-              className="underline text-[var(--accent-purple)]"
-            >
-              Upgrade to Pro
-            </Link>
-            .
-          </div>,
-          { autoClose: 5000 }
+            <Link href="/pricing" className="underline text-[var(--accent-purple)]">Upgrade to Pro</Link>.
+          </div>, { autoClose: 5000 }
         );
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
@@ -354,21 +365,15 @@ export default function ChatInterface() {
     }
   };
 
-  const clearSelectedFile = () => {
-    setSelectedFile(null);
-    setFilePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleNewChat = async () => {
+  const handleNewChat = useCallback(async () => {
     if (renamingChatId) onCancelRename();
     await contextCreateNewChat(DEFAULT_CHAT_TITLE);
     setIsMobileSidebarOpen(false);
     clearSelectedFile();
     setInputValue("");
-  };
+  }, [renamingChatId, onCancelRename, contextCreateNewChat, clearSelectedFile]); // Added clearSelectedFile
 
-  const handleChatSelect = async (chatId: string) => {
+  const handleChatSelect = useCallback(async (chatId: string) => {
     if (renamingChatId) onCancelRename();
     if (chatId === currentChatId) {
       if (isMobileSidebarOpen) setIsMobileSidebarOpen(false);
@@ -378,84 +383,62 @@ export default function ChatInterface() {
     setIsMobileSidebarOpen(false);
     clearSelectedFile();
     setInputValue("");
-  };
+  }, [renamingChatId, onCancelRename, currentChatId, isMobileSidebarOpen, contextSelectChat, clearSelectedFile]);
 
-  const handleSubmit = async (promptFromMic?: string) => {
-    const textToSubmit = promptFromMic || inputValue;
-    if (!textToSubmit.trim() && !selectedFile) return;
-    if (isAISendingReceiving || (isListening && !promptFromMic)) return;
-    if (renamingChatId) onCancelRename();
-
-    await contextSendMessage(textToSubmit.trim(), selectedFile || undefined);
-    setInputValue("");
-    clearSelectedFile();
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  };
-
-  const handleStopStreaming = () => {
+  const handleStopStreaming = useCallback(() => {
     contextStopStreaming();
-  };
+  }, [contextStopStreaming]);
 
-  const handleStartRename = (chatId: string, currentTitle: string) => {
+  const handleStartRename = useCallback((chatId: string, currentTitle: string) => {
     setRenamingChatId(chatId);
     setRenamingTitleInput(currentTitle);
     setActiveMenuChatId(null);
-  };
+  }, []); // set... functions are stable
 
-  const onCancelRename = () => {
-    setRenamingChatId(null);
-    setRenamingTitleInput("");
-  };
-
-  const onConfirmRename = async () => {
+  const onConfirmRename = useCallback(async () => {
     if (!renamingChatId || !renamingTitleInput.trim()) {
       onCancelRename();
       return;
     }
     await contextRenameChat(renamingChatId, renamingTitleInput.trim());
     onCancelRename();
-  };
+  }, [renamingChatId, renamingTitleInput, contextRenameChat, onCancelRename]);
 
-  const handleDeleteRequest = (chatId: string) => {
+  const handleDeleteRequest = useCallback((chatId: string) => {
     setChatIdToDelete(chatId);
     setShowDeleteConfirmModal(true);
     setActiveMenuChatId(null);
-  };
+  }, []); // set... functions are stable
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setShowDeleteConfirmModal(false);
     setChatIdToDelete(null);
-  };
+  }, []); // set... functions are stable
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!chatIdToDelete) return;
     await contextDeleteChat(chatIdToDelete);
     handleCancelDelete();
-  };
+  }, [chatIdToDelete, contextDeleteChat, handleCancelDelete]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (
-      e.key === "Enter" &&
-      !e.shiftKey &&
-      !isAISendingReceiving &&
-      !isListening
+      e.key === "Enter" && !e.shiftKey &&
+      !isAISendingReceiving && !isListening
     ) {
       e.preventDefault();
       handleSubmit();
     }
-  };
+  }, [isAISendingReceiving, isListening, handleSubmit]);
 
-  const handleQuickAction = (action: string) => {
+  const handleQuickAction = useCallback((action: string) => {
     setInputValue(action);
-    textareaRef.current?.focus();
+    if (textareaRef.current) textareaRef.current.focus();
     clearSelectedFile();
-  };
+  }, [clearSelectedFile]); // setInputValue is stable
 
-  const toggleMobileSidebar = () =>
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  const toggleMobileSidebar = useCallback(() =>
+    setIsMobileSidebarOpen(prev => !prev), []); // Dependency on isMobileSidebarOpen removed by using functional update
 
   const showQuickActions =
     (!currentChatId ||
@@ -464,13 +447,9 @@ export default function ChatInterface() {
     !selectedFile &&
     !renamingChatId;
 
-  const handleMicClick = () => {
+  const handleMicClick = useCallback(() => {
     if (isAISendingReceiving || selectedFile) {
-      toast.info(
-        selectedFile
-          ? "Clear selected file to use microphone."
-          : "Wait for AI response to complete."
-      );
+      toast.info(selectedFile ? "Clear selected file to use microphone." : "Wait for AI response to complete.");
       return;
     }
     if (!speechRecognitionRef.current) {
@@ -480,30 +459,27 @@ export default function ChatInterface() {
     if (isListening) {
       speechRecognitionRef.current.stop();
       if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+      // setIsListening will be set by the 'onend' callback of SpeechRecognition
     } else {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then(() => {
-          setInputValue("");
+          setInputValue(""); // Clear input when starting mic
           speechRecognitionRef.current?.start();
           setIsListening(true);
-          toast.info("Listening...", {
-            autoClose: 2000,
-            position: "bottom-center",
-          });
+          toast.info("Listening...", { autoClose: 2000, position: "bottom-center" });
         })
-        .catch((err) => {
+        .catch((err: Error) => { // Type the error
           console.error("Mic access error:", err);
-          if (
-            err.name === "NotAllowedError" ||
-            err.name === "PermissionDeniedError"
-          )
+          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
             toast.error("Microphone access denied.");
-          else toast.error("Could not access microphone.");
+          } else {
+            toast.error("Could not access microphone.");
+          }
           setIsListening(false);
         });
     }
-  };
+  }, [isAISendingReceiving, selectedFile, isListening]); // setIsListening, setInputValue are stable
 
   const canUseAdvancedFeatures = isProUser;
   const isWaitingForFirstAIChunk =
@@ -512,14 +488,13 @@ export default function ChatInterface() {
     messages[messages.length - 1].type === "assistant" &&
     messages[messages.length - 1].isStreaming &&
     messages[messages.length - 1].content === "";
+
   return (
     <div className="flex h-screen bg-[var(--background-primary)] text-[var(--text-primary)] theme-transition">
       <motion.button
         onClick={toggleMobileSidebar}
         className="md:hidden fixed left-3 top-3 z-30 p-2.5 bg-[var(--background-accent)] rounded-full shadow-lg text-[var(--text-secondary)] hover:bg-[var(--border-primary)] hover:text-[var(--text-primary)] theme-transition"
-        aria-label="Toggle sidebar"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        aria-label="Toggle sidebar" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
       >
         {isMobileSidebarOpen ? <CloseIcon size={20} /> : <Menu size={20} />}
       </motion.button>
@@ -527,13 +502,7 @@ export default function ChatInterface() {
       <motion.div
         className={`fixed md:relative z-20 w-64 sm:w-72 h-full bg-[var(--card-bg)] border-r border-[var(--border-primary)] shadow-xl md:shadow-none`}
         initial={{ x: "-100%" }}
-        animate={{
-          x:
-            isMobileSidebarOpen ||
-            (typeof window !== "undefined" && window.innerWidth >= 768)
-              ? "0%"
-              : "-100%",
-        }}
+        animate={{ x: (isMobileSidebarOpen || (typeof window !== 'undefined' && window.innerWidth >= 768)) ? "0%" : "-100%" }}
         transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
       >
         <Sidebar
@@ -560,45 +529,33 @@ export default function ChatInterface() {
           <motion.div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10 md:hidden"
             onClick={() => setIsMobileSidebarOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           />
         )}
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {isAISendingReceiving &&
-          !messages.some((m) => m.isStreaming && m.content !== "") &&
-          !isWaitingForFirstAIChunk && (
-            <div className="p-2 text-center text-sm text-[var(--text-muted)] bg-[var(--background-accent)]/70 border-b border-[var(--border-primary)]">
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+        {isAISendingReceiving && !messages.some(m => m.isStreaming && m.content !== "") && !isWaitingForFirstAIChunk && (
+           <div className="p-2 text-center text-sm text-[var(--text-muted)] bg-[var(--background-accent)]/70 border-b border-[var(--border-primary)]">
+             <motion.div
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 className="flex items-center justify-center"
-              >
+             >
                 <Loader2 className="w-4 h-4 animate-spin mr-2 text-[var(--accent-purple)]" />
                 <span>NovaAI is processing your request...</span>
-              </motion.div>
-            </div>
-          )}
+             </motion.div>
+           </div>
+         )}
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-4 pt-16 md:pt-6 scroll-smooth bg-[var(--background-primary)]">
           <AnimatePresence initial={false}>
             {messages.map((message) => (
               <motion.div
-                key={`${message.id}-${message.timestamp}`}
+                key={`${message.id}-${message.timestamp}`} 
                 layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                transition={{
-                  type: "spring",
-                  stiffness: 150,
-                  damping: 20,
-                  duration: 0.3,
-                }}
+                transition={{ type: "spring", stiffness: 150, damping: 20, duration: 0.3 }}
               >
                 <MessageBubble message={message} />
               </motion.div>
@@ -608,11 +565,7 @@ export default function ChatInterface() {
         </div>
 
         {showQuickActions && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <QuickActions onActionSelect={handleQuickAction} />
           </motion.div>
         )}
@@ -623,243 +576,92 @@ export default function ChatInterface() {
               {selectedFile && (
                 <motion.div
                   initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{
-                    opacity: 1,
-                    height: "auto",
-                    marginBottom: "0.5rem",
-                  }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: "0.5rem" }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   className="p-2.5 bg-[var(--background-accent)] rounded-lg flex items-center justify-between text-sm border border-[var(--border-primary)]"
                 >
                   <div className="flex items-center space-x-2 overflow-hidden">
                     {filePreview ? (
-                      <img
-                        src={filePreview}
-                        alt={selectedFile.name}
+                      <Image
+                        src={filePreview} alt={selectedFile.name || "File preview"}
+                        width={40} height={40}
                         className="w-10 h-10 object-cover rounded-md"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-md bg-[var(--border-primary)] flex items-center justify-center">
-                        {selectedFile.type.startsWith("image/") ? (
-                          <ImageIcon className="w-5 h-5 text-[var(--text-muted)]" />
-                        ) : (
-                          <FileText className="w-5 h-5 text-[var(--text-muted)]" />
-                        )}
+                        {selectedFile.type.startsWith("image/") ? <ImageIcon className="w-5 h-5 text-[var(--text-muted)]" /> : <FileText className="w-5 h-5 text-[var(--text-muted)]" />}
                       </div>
                     )}
-                    <span
-                      className="truncate text-[var(--text-secondary)]"
-                      title={selectedFile.name}
-                    >
-                      {selectedFile.name}
-                    </span>
-                    <span className="text-xs text-[var(--text-muted)] flex-shrink-0">
-                      {" "}
-                      ({(selectedFile.size / 1024).toFixed(1)} KB)
-                    </span>
+                    <span className="truncate text-[var(--text-secondary)]" title={selectedFile.name}>{selectedFile.name}</span>
+                    <span className="text-xs text-[var(--text-muted)] flex-shrink-0"> ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
                   </div>
                   <motion.button
-                    onClick={clearSelectedFile}
-                    disabled={isAISendingReceiving}
+                    onClick={clearSelectedFile} disabled={isAISendingReceiving}
                     className="p-1.5 text-red-500 hover:text-red-700 disabled:text-[var(--text-muted)] rounded-full hover:bg-red-500/10"
-                    aria-label="Remove selected file"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Trash2 size={18} />
-                  </motion.button>
+                    aria-label="Remove selected file" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  ><Trash2 size={18} /></motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div
-              className={`relative ${
-                isAISendingReceiving ? "opacity-70 cursor-wait" : ""
-              }`}
-            >
+            <div className={`relative ${isAISendingReceiving ? 'opacity-70 cursor-wait' : ''}`}>
               <div className="flex items-end space-x-1.5 sm:space-x-2">
                 <input
-                  type="file"
-                  ref={fileInputRef}
-                  hidden
-                  onChange={handleFileChange}
+                  type="file" ref={fileInputRef} hidden onChange={handleFileChange}
                   accept=".pdf,.txt,.doc,.docx,image/png,image/jpeg,image/gif,image/webp"
-                  disabled={
-                    isAISendingReceiving ||
-                    isListening ||
-                    !!selectedFile ||
-                    (!isSubscriptionLoading && !canUseAdvancedFeatures) ||
-                    !!renamingChatId ||
-                    isContextRenamingChat
-                  }
+                  disabled={isAISendingReceiving || isListening || !!selectedFile || (!isSubscriptionLoading && !canUseAdvancedFeatures) || !!renamingChatId || isContextRenamingChat}
                 />
                 <motion.button
                   type="button"
-                  title={
-                    !isSubscriptionLoading && !canUseAdvancedFeatures
-                      ? "File Attachments (Pro Feature)"
-                      : "Attach file"
-                  }
+                  title={(!isSubscriptionLoading && !canUseAdvancedFeatures) ? "File Attachments (Pro Feature)" : "Attach file"}
                   onClick={() => {
-                    if (
-                      !isAISendingReceiving &&
-                      !isListening &&
-                      !selectedFile &&
-                      (isSubscriptionLoading || canUseAdvancedFeatures) &&
-                      !renamingChatId &&
-                      !isContextRenamingChat
-                    ) {
+                    if (!isAISendingReceiving && !isListening && !selectedFile && (isSubscriptionLoading || canUseAdvancedFeatures) && !renamingChatId && !isContextRenamingChat) {
                       fileInputRef.current?.click();
-                    } else if (
-                      !isSubscriptionLoading &&
-                      !canUseAdvancedFeatures
-                    ) {
-                      toast.info(
-                        <div>
-                          File attachments are a Pro feature.{" "}
-                          <Link
-                            href="/pricing"
-                            className="underline text-[var(--accent-purple)]"
-                          >
-                            Upgrade to Pro
-                          </Link>
-                          .
-                        </div>,
-                        { autoClose: 5000 }
-                      );
+                    } else if (!isSubscriptionLoading && !canUseAdvancedFeatures) {
+                      toast.info(<div>File attachments are a Pro feature. <Link href="/pricing" className="underline text-[var(--accent-purple)]">Upgrade to Pro</Link>.</div>, { autoClose: 5000 });
                     }
                   }}
-                  disabled={
-                    isAISendingReceiving ||
-                    isListening ||
-                    !!selectedFile ||
-                    (!isSubscriptionLoading && !canUseAdvancedFeatures) ||
-                    !!renamingChatId ||
-                    isContextRenamingChat
-                  }
+                  disabled={isAISendingReceiving || isListening || !!selectedFile || (!isSubscriptionLoading && !canUseAdvancedFeatures) || !!renamingChatId || isContextRenamingChat}
                   className="p-2.5 text-[var(--text-muted)] hover:text-[var(--accent-purple)] rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed hidden sm:inline-flex items-center justify-center"
-                  aria-label="Attach file"
-                  whileHover={{
-                    scale: 1.1,
-                    backgroundColor: "var(--background-accent)",
-                  }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Paperclip className="w-5 h-5" />
-                </motion.button>
+                  aria-label="Attach file" whileHover={{ scale: 1.1, backgroundColor: "var(--background-accent)" }} whileTap={{ scale: 0.9 }}
+                ><Paperclip className="w-5 h-5" /></motion.button>
 
                 <div className="flex-1 relative">
                   <textarea
-                    ref={textareaRef}
-                    value={inputValue}
+                    ref={textareaRef} value={inputValue}
                     onChange={(e) => {
-                      if (isListening && autoSubmitTimerRef.current)
-                        clearTimeout(autoSubmitTimerRef.current);
+                      if (isListening && autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
                       setInputValue(e.target.value);
                     }}
                     onKeyDown={handleKeyDown}
-                    placeholder={
-                      isListening
-                        ? "Listening..."
-                        : selectedFile
-                        ? "Add a message for the file..."
-                        : "Message NovaAI..."
-                    }
+                    placeholder={isListening ? "Listening..." : selectedFile ? "Add a message for the file..." : "Message NovaAI..."}
                     className="w-full min-h-[46px] sm:min-h-[48px] max-h-32 sm:max-h-40 px-4 py-3 pr-10 sm:pr-12 bg-[var(--background-accent)] border border-[var(--border-primary)] rounded-xl focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-[var(--accent-purple)] focus:border-transparent resize-none text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] theme-transition"
                     rows={1}
-                    disabled={
-                      isAISendingReceiving ||
-                      !!renamingChatId ||
-                      isContextRenamingChat ||
-                      (isListening && !inputValue)
-                    }
+                    disabled={isAISendingReceiving || !!renamingChatId || isContextRenamingChat || (isListening && !inputValue)}
                   />
                   <motion.button
-                    type="button"
-                    title={isListening ? "Stop listening" : "Use microphone"}
-                    onClick={handleMicClick}
-                    disabled={
-                      isAISendingReceiving ||
-                      !!selectedFile ||
-                      (!speechRecognitionRef.current && !isListening) ||
-                      !!renamingChatId ||
-                      isContextRenamingChat
-                    }
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full theme-transition ${
-                      isAISendingReceiving ||
-                      !!selectedFile ||
-                      (!speechRecognitionRef.current && !isListening) ||
-                      !!renamingChatId ||
-                      isContextRenamingChat
-                        ? "text-[var(--text-muted)] cursor-not-allowed opacity-60"
-                        : isListening
-                        ? "text-red-500 bg-red-500/10 animate-pulse"
-                        : "text-[var(--accent-purple)] hover:text-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/10"
-                    }`}
-                    aria-label={
-                      isListening ? "Stop listening" : "Use microphone"
-                    }
-                    whileHover={{
-                      scale:
-                        !isAISendingReceiving &&
-                        !selectedFile &&
-                        speechRecognitionRef.current &&
-                        !renamingChatId &&
-                        !isContextRenamingChat
-                          ? 1.1
-                          : 1,
-                    }}
-                    whileTap={{
-                      scale:
-                        !isAISendingReceiving &&
-                        !selectedFile &&
-                        speechRecognitionRef.current &&
-                        !renamingChatId &&
-                        !isContextRenamingChat
-                          ? 0.9
-                          : 1,
-                    }}
-                  >
-                    {isListening ? (
-                      <StopCircle className="w-5 h-5" />
-                    ) : (
-                      <Mic className="w-5 h-5" />
-                    )}
-                  </motion.button>
+                    type="button" title={isListening ? "Stop listening" : "Use microphone"} onClick={handleMicClick}
+                    disabled={isAISendingReceiving || !!selectedFile || (!speechRecognitionRef.current && !isListening) || !!renamingChatId || isContextRenamingChat}
+                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full theme-transition ${isAISendingReceiving || !!selectedFile || (!speechRecognitionRef.current && !isListening) || !!renamingChatId || isContextRenamingChat ? "text-[var(--text-muted)] cursor-not-allowed opacity-60" : isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-[var(--accent-purple)] hover:text-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/10"}`}
+                    aria-label={isListening ? "Stop listening" : "Use microphone"}
+                    whileHover={{ scale: !isAISendingReceiving && !selectedFile && speechRecognitionRef.current && !renamingChatId && !isContextRenamingChat ? 1.1 : 1 }}
+                    whileTap={{ scale: !isAISendingReceiving && !selectedFile && speechRecognitionRef.current && !renamingChatId && !isContextRenamingChat ? 0.9 : 1 }}
+                  >{isListening ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}</motion.button>
                 </div>
 
                 <motion.button
-                  onClick={
-                    isAISendingReceiving && messages.some((m) => m.isStreaming)
-                      ? handleStopStreaming
-                      : () => handleSubmit()
-                  }
+                  onClick={isAISendingReceiving && messages.some(m => m.isStreaming) ? handleStopStreaming : handleSubmit}
                   disabled={
-                    // Disabled if not sending/streaming and no input/file
-                    (!isAISendingReceiving &&
-                      !messages.some((m) => m.isStreaming) &&
-                      !inputValue.trim() &&
-                      !selectedFile) || // Disabled if sending but not yet streaming (i.e., initial AI processing) and no input/file
-                    (isAISendingReceiving &&
-                      !messages.some((m) => m.isStreaming) &&
-                      !inputValue.trim() &&
-                      !selectedFile) ||
-                    !!renamingChatId ||
-                    isContextRenamingChat ||
-                    (isListening && !isAISendingReceiving) // Disable if listening and not actively streaming
+                    (!isAISendingReceiving && !messages.some(m => m.isStreaming) && !inputValue.trim() && !selectedFile) ||
+                    (isAISendingReceiving && !messages.some(m => m.isStreaming) && !inputValue.trim() && !selectedFile) ||
+                    !!renamingChatId || isContextRenamingChat || (isListening && !isAISendingReceiving)
                   }
                   className="p-2.5 sm:p-3 bg-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/80 disabled:bg-[var(--border-primary)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed text-white rounded-xl theme-transition flex items-center justify-center"
-                  aria-label={
-                    isAISendingReceiving && messages.some((m) => m.isStreaming)
-                      ? "Stop generating"
-                      : "Send message"
-                  }
-                  whileHover={{ scale: 1.05, filter: "brightness(1.1)" }}
-                  whileTap={{ scale: 0.95 }}
+                  aria-label={isAISendingReceiving && messages.some(m => m.isStreaming) ? "Stop generating" : "Send message"}
+                  whileHover={{ scale: 1.05, filter: "brightness(1.1)" }} whileTap={{ scale: 0.95 }}
                 >
-                  {isAISendingReceiving &&
-                  messages.some((m) => m.isStreaming) ? (
-                    <StopCircle className="w-5 h-5" />
+                  {isAISendingReceiving && messages.some(m => m.isStreaming) ? (
+                     <StopCircle className="w-5 h-5" />
                   ) : isAISendingReceiving ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
@@ -869,19 +671,10 @@ export default function ChatInterface() {
               </div>
             </div>
             <div className="text-center mt-2 px-2">
-              <p className="text-[10px] sm:text-xs text-[var(--text-muted)]">
-                NovaAI can make mistakes. Consider checking important
-                information.
-              </p>
+              <p className="text-[10px] sm:text-xs text-[var(--text-muted)]">NovaAI can make mistakes. Consider checking important information.</p>
             </div>
             {!isSubscriptionLoading && !isProUser && (
-              <p className="text-center text-xs text-[var(--accent-purple)] mt-1">
-                Some features are limited.{" "}
-                <Link href="/pricing" className="underline font-semibold">
-                  Upgrade to Pro
-                </Link>{" "}
-                for full access.
-              </p>
+              <p className="text-center text-xs text-[var(--accent-purple)] mt-1">Some features are limited. <Link href="/pricing" className="underline font-semibold">Upgrade to Pro</Link> for full access.</p>
             )}
           </div>
         </div>
