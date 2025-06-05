@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere, TorusKnot } from '@react-three/drei';
+import { OrbitControls, TorusKnot } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '@/app/context/ThemeContext'; 
 

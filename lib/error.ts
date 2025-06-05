@@ -1,31 +1,50 @@
-export class APIError extends Error {
-  status: number;
-  details?: any;
+// type ErrorDetails = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
-  constructor(message: string, status: number = 500, details?: any) {
-    super(message);
-    this.status = status;
-    this.details = details;
-    Object.setPrototypeOf(this, APIError.prototype);
-  }
+// export class APIError extends Error {
+//   status: number;
+//   details?: ErrorDetails;
 
-  toJSON() {
-    return {
-      error: this.message,
-      status: this.status,
-      ...(this.details && { details: this.details }),
-    };
-  }
-}
+//   constructor(
+//     message: string,
+//     status: number = 500,
+//     details?: ErrorDetails
+//   ) {
+//     super(message);
+//     this.status = status;
+//     this.details = details;
+//     Object.setPrototypeOf(this, APIError.prototype);
+//   }
 
-export function handleError(error: unknown) {
-  if (error instanceof APIError) {
-    return error;
-  }
+//   toJSON(): {
+//     error: string;
+//     status: number;
+//     details?: ErrorDetails;
+//   } {
+//     const json: {
+//       error: string;
+//       status: number;
+//       details?: ErrorDetails;
+//     } = {
+//       error: this.message,
+//       status: this.status,
+//     };
+
+//     if (this.details !== undefined && this.details !== null) {
+//       json.details = this.details;
+//     }
+
+//     return json;
+//   }
+// }
+
+// export function handleError(error: unknown): APIError {
+//   if (error instanceof APIError) {
+//     return error;
+//   }
   
-  if (error instanceof Error) {
-    return new APIError(error.message);
-  }
+//   if (error instanceof Error) {
+//     return new APIError(error.message);
+//   }
   
-  return new APIError('An unknown error occurred');
-}
+//   return new APIError('An unknown error occurred');
+// }

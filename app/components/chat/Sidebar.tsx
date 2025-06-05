@@ -2,19 +2,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import {Plus,MessageSquare,User as UserIcon,Sparkles,MoreHorizontal,ChevronDown,Loader2,Check,X as LucideX,ArrowUpCircle,Settings,HardDrive, Zap,
 } from "lucide-react";
-import {useUser,SignedIn,SignedOut,UserButton,SignInButton,} from "@clerk/nextjs";
+import {SignedIn,SignedOut,UserButton,SignInButton,} from "@clerk/nextjs";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "@/app/context/ThemeContext";
 import ThemeSwitcher from "@/app/components/ui/ThemeSwitcher";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { Message } from "@/types";
 
 interface Chat {
   _id: string;
   title: string;
-  messages: any[];
+  messages: Message[];
   createdAt: string;
   updatedAt?: string;
 }
@@ -53,7 +53,6 @@ export default function Sidebar({
   activeMenuChatId,
   setActiveMenuChatId,
 }: SidebarProps) {
-const { theme: _theme } = useTheme();
   const {
     isProUser,
     isLoading: isSubscriptionLoading,
@@ -64,7 +63,6 @@ const { theme: _theme } = useTheme();
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
- const { user: _user } = useUser();
 
  const handleNewChatClick = () => {
     onNewChat();

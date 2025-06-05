@@ -2,6 +2,7 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 import { File as FormidableFile } from 'formidable';
 import { extractTextFromFile } from './fileProcessor'; 
 import type { Message } from "@/types"; 
+
 let genAI: GoogleGenerativeAI | null = null;
 try {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -49,7 +50,7 @@ export async function getAIResponseStream(
           } else {
             fileContentForPrompt = extractedContent; 
           }
-        } catch (e) {
+        } catch {
           fileContentForPrompt = extractedContent; 
         }
       } else {
@@ -109,17 +110,15 @@ export async function getAIResponseStream(
       }
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("AI_SERVICE_STREAM_ERROR Details:", {
-      message: error?.message || "Unknown error",
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      details: error?.details
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
     });
 
     let errorMessage = "🤖 I'm having trouble processing your request right now. Please try again.";
-    if (error?.message) {
+    if (error instanceof Error) {
       const errorMsg = error.message.toLowerCase();
       if (errorMsg.includes("api key") || errorMsg.includes("authentication")) {
         errorMessage = "🔑 Authentication error with AI provider.";
@@ -129,7 +128,7 @@ export async function getAIResponseStream(
         errorMessage = "🛡️ Your request was blocked due to safety settings by the AI provider.";
       } else if (errorMsg.includes("model") && (errorMsg.includes("not found") || errorMsg.includes("does not exist"))) {
         errorMessage = "🤷 AI Model not found or not accessible.";
-      } else if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+      } else if ('code' in error && (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED')) {
         errorMessage = "🌐 Network error connecting to AI provider. Please check your connection and try again.";
       }
     }

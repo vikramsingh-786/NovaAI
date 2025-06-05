@@ -1,4 +1,4 @@
-export async function fetchAPI<T = any>(
+export async function fetchAPI<T = unknown>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
@@ -12,8 +12,12 @@ export async function fetchAPI<T = any>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || "API request failed");
+    throw new Error(
+      (typeof errorData === 'object' && errorData !== null && 'error' in errorData) 
+        ? String(errorData.error) 
+        : "API request failed"
+    );
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }

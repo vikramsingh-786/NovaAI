@@ -26,8 +26,9 @@ export async function extractTextFromFile(file: FormidableFile): Promise<string>
         const result = await mammoth.extractRawText({ buffer: dataBuffer });
         console.log(`FILE_PROCESSOR: Word text extracted for ${originalName}`);
         return result.value;
-      } catch (docError: any) {
-        console.error(`FILE_PROCESSOR_ERROR: Error parsing Word document ${originalName}:`, docError);
+      } catch (docError: unknown) {
+        const errorMessage = docError instanceof Error ? docError.message : 'Unknown error';
+        console.error(`FILE_PROCESSOR_ERROR: Error parsing Word document ${originalName}:`, errorMessage);
         return `[Error parsing Word document: ${originalName}]`;
       }
     }
@@ -45,8 +46,9 @@ export async function extractTextFromFile(file: FormidableFile): Promise<string>
       console.warn(`FILE_PROCESSOR_WARN: Unsupported file type: ${originalName} (${mimeType})`);
       return `[Unsupported file type: ${originalName} (${mimeType}). Supported types: TXT, PDF, DOC/DOCX, Images (PNG, JPG, GIF, WEBP)]`;
     }
-  } catch (error: any) {
-    console.error(`FILE_PROCESSOR_ERROR: Error processing file ${originalName}:`, error.message);
-    return `[Error reading file: ${originalName}. Error: ${error.message}]`;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`FILE_PROCESSOR_ERROR: Error processing file ${originalName}:`, errorMessage);
+    return `[Error reading file: ${originalName}. Error: ${errorMessage}]`;
   }
 }

@@ -20,7 +20,7 @@ export function truncateString(str: string, maxLength: number = 50): string {
   return str.substring(0, maxLength) + '...';
 }
 
-export async function rateLimit(userId: string): Promise<boolean> {
+export async function rateLimit(): Promise<boolean> {
   return false; 
 }
 

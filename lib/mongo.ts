@@ -18,6 +18,7 @@ let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 declare global {
+  // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
@@ -116,6 +117,7 @@ export async function updateUserSubscription(
     { $set: { ...subscriptionData, updatedAt: new Date() } }
   );
 }
+
 export async function getUserSubscriptionStatus(
   clerkUserId: string
 ): Promise<UserDocument["subscriptionStatus"] | "not_found"> {
@@ -135,7 +137,6 @@ export async function getChatsCollection(): Promise<Collection<ChatDocument>> {
 }
 
 export function transformChatDocument(chatDoc: ChatDocument): Chat {
-  // Removed async, it's synchronous
   return {
     _id: chatDoc._id.toString(),
     userId: chatDoc.userId,
@@ -160,6 +161,7 @@ export async function getUserChats(userId: string): Promise<Chat[]> {
     .toArray();
   return chatDocs.map((doc) => transformChatDocument(doc));
 }
+
 export async function createChat(userId: string, title: string): Promise<Chat> {
   const chatsCollection = await getChatsCollection();
   const now = new Date();
@@ -207,7 +209,7 @@ export async function addMessageToChat(
   await chatsCollection.updateOne(
     { _id: new MongoObjectId(chatId) },
     {
-      $push: { messages: message as any },
+      $push: { messages: message },
       $set: { updatedAt: new Date() },
     }
   );
