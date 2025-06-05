@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from 'next/image';
 import {
@@ -221,22 +221,22 @@ export default function ChatInterface() {
   }, []); // setRenamingChatId & setRenamingTitleInput are stable
 
   const handleSubmit = useCallback(async (promptFromMic?: string) => {
-    const textToSubmit = promptFromMic || inputValue;
-    if (!textToSubmit.trim() && !selectedFile) return;
-    if (isAISendingReceiving || (isListening && !promptFromMic)) return;
-    if (renamingChatId) onCancelRename();
+  const textToSubmit = String(promptFromMic || inputValue || ""); // Ensure it's always a string
+  if (!textToSubmit.trim() && !selectedFile) return;
+  if (isAISendingReceiving || (isListening && !promptFromMic)) return;
+  if (renamingChatId) onCancelRename();
 
-    await contextSendMessage(textToSubmit.trim(), selectedFile || undefined);
-    setInputValue("");
-    if (selectedFile) { // Only clear if a file was actually part of the submission
-        setSelectedFile(null);
-        setFilePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-  }, [inputValue, selectedFile, isAISendingReceiving, isListening, renamingChatId, contextSendMessage, onCancelRename]);
+  await contextSendMessage(textToSubmit.trim(), selectedFile || undefined);
+  setInputValue("");
+  if (selectedFile) {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+  if (textareaRef.current) {
+    textareaRef.current.style.height = "auto";
+  }
+}, [inputValue, selectedFile, isAISendingReceiving, isListening, renamingChatId, contextSendMessage, onCancelRename]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -314,7 +314,7 @@ export default function ChatInterface() {
       if (speechRecognitionRef.current && isListening) {
         try {
           speechRecognitionRef.current.stop();
-        } catch (_e: unknown) { /* ignore */ }
+        } catch { /* ignore */ }
       }
     };
   }, [isListening, isAISendingReceiving, handleSubmit]); // Added handleSubmit

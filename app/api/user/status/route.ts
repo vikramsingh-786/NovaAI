@@ -1,5 +1,5 @@
 // app/api/user/status/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import * as mongoLib from '../../../../lib/mongo'; // Assuming this path and import style is intended
 import type { UserDocument } from '@/types';

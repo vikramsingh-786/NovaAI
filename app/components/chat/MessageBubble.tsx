@@ -168,8 +168,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     const streamingCodeBlockStartRegex = /```(\w+)?\s*\n([\s\S]*)$/;
 
     if (message.isStreaming) {
-      let tempContent = contentToParse;
-      let lastTripleTickIndex = tempContent.lastIndexOf("```");
+      const tempContent = contentToParse;
+      const lastTripleTickIndex = tempContent.lastIndexOf("```");
 
       if (lastTripleTickIndex !== -1) {
         const contentBeforeLastTicks = tempContent.substring(
@@ -290,7 +290,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        a: ({ node, ...props }) => (
+                        a: ({ ...props }) => (
                           <a
                             {...props}
                             target="_blank"

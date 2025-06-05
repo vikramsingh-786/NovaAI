@@ -53,7 +53,7 @@ export default function Sidebar({
   activeMenuChatId,
   setActiveMenuChatId,
 }: SidebarProps) {
-  const { theme } = useTheme();
+const { theme: _theme } = useTheme();
   const {
     isProUser,
     isLoading: isSubscriptionLoading,
@@ -64,9 +64,9 @@ export default function Sidebar({
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useUser();
+ const { user: _user } = useUser();
 
-  const handleNewChatClick = () => {
+ const handleNewChatClick = () => {
     onNewChat();
     if (onCloseMobileSidebar) onCloseMobileSidebar();
     setActiveMenuChatId(null);
@@ -99,8 +99,9 @@ export default function Sidebar({
 
       const { url } = await response.json();
       window.location.href = url;
-    } catch (error: any) {
-      toast.error(error.message || "Could not open subscription management.");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Could not open subscription management.";
+      toast.error(errorMessage);
     } finally {
       setIsPortalLoading(false);
     }
@@ -149,6 +150,7 @@ export default function Sidebar({
       renameInputRef.current.select();
     }
   }, [renamingChatId]);
+
 
   const clerkUserButtonAppearance = {
     elements: {

@@ -40,11 +40,11 @@ export default function About() {
               Beyond Ordinary AI
             </h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6 leading-relaxed">
-              NovaAI isn't just another chatbot. It's a thinking partner that understands nuance, 
+              NovaAI isn&apos;t just another chatbot. It&apos;s a thinking partner that understands nuance, 
               context, and the subtle art of human communication.
             </p>
             <p className="text-lg text-[var(--text-muted)] mb-10 leading-relaxed">
-              Whether you're solving complex problems, brainstorming creative ideas, or exploring 
+              Whether you&apos;re solving complex problems, brainstorming creative ideas, or exploring 
               new concepts, NovaAI adapts to your cognitive style and helps you think deeper.
             </p>
             <motion.div 

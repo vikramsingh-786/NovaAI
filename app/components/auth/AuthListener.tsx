@@ -1,7 +1,7 @@
 // app/components/auth/AuthListener.tsx
 'use client';
 
-import { useEffect, ReactNode } from 'react'; // Import ReactNode if needed for stricter typing
+import { useEffect } from 'react'; // Import ReactNode if needed for stricter typing
 import { useUser, useAuth } from '@clerk/nextjs';
 import { toast, ToastOptions } from 'react-toastify'; // Import ToastOptions for better typing
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Code, FileText, Sparkles, Brain } from "lucide-react";
+import { Code, FileText, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 interface QuickActionsProps {
   onActionSelect: (action: string) => void;

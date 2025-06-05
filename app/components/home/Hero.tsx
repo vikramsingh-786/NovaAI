@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 import { forwardRef, PropsWithChildren, ButtonHTMLAttributes, AnchorHTMLAttributes, Suspense } from 'react';
 import dynamic from 'next/dynamic';
+
 const InteractiveBrainCanvas = dynamic(() => import('../ui/InteractiveBrain'), {
   ssr: false,
   loading: () => (
@@ -18,26 +19,15 @@ const InteractiveBrainCanvas = dynamic(() => import('../ui/InteractiveBrain'), {
 type MotionElementProps = PropsWithChildren<
   (ButtonHTMLAttributes<HTMLButtonElement> & { as?: 'button' }) |
   (AnchorHTMLAttributes<HTMLAnchorElement> & { as: 'a'; href?: string })
-> & MotionProps & {
-  redirectUrl?: string;
-  asChild?: boolean; 
-  mode?: 'modal' | 'redirect';
-};
+> & MotionProps;
 
 const MotionButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, MotionElementProps>(
   ({ children, as = 'button', ...props }, ref) => {
-    const {
-      redirectUrl, 
-      asChild,   
-      mode,        
-      ...validDomAndMotionProps 
-    } = props;
-
     const commonMotionProps = {
       whileHover: { scale: 1.05, filter: "brightness(1.15)" }, 
       whileTap: { scale: 0.95 },                          
       transition: { type: 'spring', stiffness: 400, damping: 15 },
-      ...validDomAndMotionProps,
+      ...props,
     };
 
     if (as === 'a') {
@@ -63,7 +53,6 @@ const MotionButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, MotionEle
   }
 );
 MotionButton.displayName = "MotionButton";
-
 
 const Hero = () => {
   const containerVariants = {
@@ -214,4 +203,4 @@ const Hero = () => {
   );
 };
 
-export default Hero
+export default Hero;

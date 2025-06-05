@@ -32,9 +32,6 @@ const MotionButtonAsChild = forwardRef<HTMLButtonElement, MotionButtonPropsForCl
   (props, ref) => {
     const {
       children,
-      redirectUrl, 
-      asChild,     
-      mode,        
       ...validHtmlAndMotionProps 
     } = props;
 
