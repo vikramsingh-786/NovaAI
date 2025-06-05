@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import Image from 'next/image'; 
+
 interface Testimonial {
   name: string;
   role: string;
@@ -12,14 +14,14 @@ export default function Testimonials() {
     {
       name: "Sarah Chen",
       role: "AI Researcher",
-      content: "NovaAI has the most intuitive interface I've ever used. It understands context like no other, truly accelerating my research.",
+      content: "NovaAI has the most intuitive interface I&apos;ve ever used. It understands context like no other, truly accelerating my research.",
       avatar: "SC",
       highlightColor: "purple"
     },
     {
       name: "Marcus Rodriguez",
       role: "Software Engineer",
-      content: "Game-changing for my development workflow. NovaAI's code understanding and generation capabilities are phenomenal.",
+      content: "Game-changing for my development workflow. NovaAI&apos;s code understanding and generation capabilities are phenomenal.",
       avatar: "MR",
       highlightColor: "blue"
     },
@@ -93,7 +95,7 @@ export default function Testimonials() {
             Loved by Innovators
           </h2>
           <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
-            See what forward-thinkers and creators are saying about their NovaAI experience. It's more than an assistant; it's a partner in thought.
+            See what forward-thinkers and creators are saying about their NovaAI experience. It&apos;s more than an assistant; it&apos;s a partner in thought.
           </p>
         </motion.div>
 
@@ -120,7 +122,13 @@ export default function Testimonials() {
                     {testimonial.avatar}
                   </div>
                 ) : (
-                  <img src={testimonial.avatar} alt={testimonial.name} className="w-14 h-14 rounded-full mr-4 object-cover shadow-md" />
+                  <Image 
+                    src={testimonial.avatar} 
+                    alt={testimonial.name} 
+                    width={56}
+                    height={56}
+                    className="w-14 h-14 rounded-full mr-4 object-cover shadow-md" 
+                  />
                 )}
                 <div>
                   <div className="font-semibold text-lg text-[var(--text-primary)]">{testimonial.name}</div>
