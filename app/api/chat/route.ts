@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getAIResponseStream } from '@/lib/aiService';
-import formidable, { File as FormidableFile, Fields, Files } from 'formidable';
+import { File as FormidableFile, Fields, Files } from 'formidable';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';

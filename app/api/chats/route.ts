@@ -14,6 +14,7 @@ export async function GET() {
     const chats = await getUserChats(userId);
     return NextResponse.json({ chats: chats || [] });
   } catch (error) {
+    console.error("Error fetching chats:", error);
     return NextResponse.json(
       { error: "Internal server error", chats: [] },
       { status: 500 }
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ chat });
   } catch (error) {
+    console.error("Error creating chat:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
