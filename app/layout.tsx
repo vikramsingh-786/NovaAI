@@ -1,4 +1,5 @@
-import { type Metadata } from "next";
+// app/layout.tsx
+import { type Metadata, type Viewport } from "next"; // Import Viewport
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -6,7 +7,8 @@ import { clerkAppearance } from "./clerk-theme";
 import CustomToast from "./CustomToast";
 import { ChatProvider } from "./context/ChatContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { SubscriptionProvider } from "./context/SubscriptionContext";
+// Import the client wrapper
+import { SubscriptionProviderClientWrapper } from "./context/SubscriptionProviderClient";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,22 +20,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
 export const metadata: Metadata = {
-  title: "NovaAI Platform",
-  description: "Advanced AI Assistant",
+  title: 'NovaAI Platform',
+  description: 'Advanced AI Assistant',
   icons: {
     icon: "/icon.png",
     apple: "/apple-touch-icon.png",
     shortcut: "/favicon.ico",
   },
-  manifest: "/site.webmanifest",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
+  manifest: '/site.webmanifest',
   other: {
-    "msapplication-TileColor": "#603cba",
-  },
+    "msapplication-TileColor": "#603cba", // Example, adjust to your theme
+  }
+};
+
+// Added Viewport export for themeColor
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' }, // Your light theme color
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },  // Your dark theme color
+  ],
 };
 
 export default function RootLayout({
@@ -46,12 +53,13 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <ThemeProvider>
-            <SubscriptionProvider>
+            {/* Use the client wrapper here */}
+            <SubscriptionProviderClientWrapper>
               <ChatProvider>
                 {children}
                 <CustomToast />
               </ChatProvider>
-            </SubscriptionProvider>
+            </SubscriptionProviderClientWrapper>
           </ThemeProvider>
         </body>
       </html>

@@ -1,6 +1,5 @@
 // app/context/SubscriptionContext.tsx
-
-"use client";
+"use client"; // This context uses client hooks, so it's a client component module
 
 import React, {
   createContext,
@@ -13,7 +12,7 @@ import React, {
 } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import type { UserDocument } from "@/types";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // useSearchParams makes this a client component
 import { toast } from "react-toastify";
 
 interface SubscriptionContextType {
@@ -31,7 +30,8 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
   undefined
 );
 
-export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
+// RENAMED this export
+export const ActualSubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const { isSignedIn, userId } = useAuth();
   const { user: clerkUser } = useUser();
 
@@ -39,18 +39,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     UserDocument["subscriptionStatus"] | null
   >(null);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start true for initial load
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This hook makes this component client-side
 
   const isPollingActiveRef = useRef(false);
-  const isRegularFetchActiveRef = useRef(false); // To prevent multiple non-polling fetches
+  const isRegularFetchActiveRef = useRef(false);
 
   const fetchSubscriptionStatus = useCallback(
     async (options?: { forcePolling?: boolean; attempts?: number }) => {
       const { forcePolling = false, attempts = 1 } = options || {};
-
       if (!isSignedIn || !userId) {
         setSubscriptionStatus("free");
         setStripeCustomerId(null);
@@ -61,24 +60,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (forcePolling && attempts === 1) {
-        if (isPollingActiveRef.current) {
-          return;
-        } // Already polling
+        if (isPollingActiveRef.current) { return; }
         isPollingActiveRef.current = true;
-        isRegularFetchActiveRef.current = false; // Stop any regular fetch thinking
+        isRegularFetchActiveRef.current = false;
       } else if (!forcePolling) {
-        // This is a regular fetch attempt
-        if (isRegularFetchActiveRef.current || isPollingActiveRef.current) {
-          return;
-        } // Another fetch (regular or polling) is already active
+        if (isRegularFetchActiveRef.current || isPollingActiveRef.current) { return;}
         isRegularFetchActiveRef.current = true;
       }
-
       setIsLoading(true);
-      let fetchedStatusThisCall: UserDocument["subscriptionStatus"] | null = null; // Track status for this specific call
+      let fetchedStatusThisCall: UserDocument["subscriptionStatus"] | null = null;
 
       try {
-        const response = await fetch("/api/user/status", { cache: "no-store" }); // Ensure fresh data
+        const response = await fetch("/api/user/status", { cache: "no-store" });
         if (!response.ok) {
           const errorData = await response
             .json()
@@ -87,8 +80,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             "CONTEXT_SUB_ERROR: Failed to fetch /api/user/status.",
             errorData.error
           );
-          fetchedStatusThisCall = "free"; // Assume free on error for this call's logic
-          // Set state only if not actively polling for something better
+          fetchedStatusThisCall = "free";
           if (!isPollingActiveRef.current || attempts >= 5) {
             setSubscriptionStatus("free");
             setStripeCustomerId(null);
@@ -97,7 +89,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
           const data: { user: UserDocument } = await response.json();
           if (data.user) {
             const newStatus = data.user.subscriptionStatus || "free";
-            fetchedStatusThisCall = newStatus; // Update for this call's logic
+            fetchedStatusThisCall = newStatus;
             setSubscriptionStatus(newStatus);
             setStripeCustomerId(data.user.stripeCustomerId || null);
 
@@ -108,9 +100,9 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     forcePolling: true,
                     attempts: attempts + 1,
                   }),
-                attempts * 1000 + 2000 // Basic backoff
+                attempts * 1000 + 2000
               );
-              return; // IMPORTANT: Exit to let polling continue, isLoading remains true
+              return;
             }
           } else {
             fetchedStatusThisCall = "free";
@@ -120,7 +112,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         }
-      } catch (error: unknown) { // Catch should use unknown
+      } catch (error: unknown) {
         console.error(
           "CONTEXT_SUB_ERROR: Exception in fetchSubscriptionStatus:",
           error instanceof Error ? error.message : error
@@ -131,17 +123,14 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             setStripeCustomerId(null);
         }
       } finally {
-        // Logic to determine if loading should stop
         if (forcePolling) {
-          // If polling ended (found active or max attempts)
           if (fetchedStatusThisCall === "active" || attempts >= 5) {
             isPollingActiveRef.current = false;
             setIsLoading(false);
-            // Clean up URL params if polling was successful or exhausted
             if (
               searchParams.has("subscription_success") ||
               searchParams.has("from_portal") ||
-              searchParams.has("subscription_canceled") // Also clean cancel if polling was triggered
+              searchParams.has("subscription_canceled")
             ) {
               const currentPath = window.location.pathname;
               const newSearchParams = new URLSearchParams(
@@ -150,7 +139,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
               newSearchParams.delete("subscription_success");
               newSearchParams.delete("from_portal");
               newSearchParams.delete("subscription_canceled");
-              router.replace( // Use replace to not add to history
+              router.replace(
                 `${currentPath}${
                   newSearchParams.size > 0
                     ? "?" + newSearchParams.toString()
@@ -160,18 +149,15 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
               );
             }
           }
-          // If polling continues, isLoading remains true (because of the return above)
         } else {
-          // For regular (non-polling) fetches
           isRegularFetchActiveRef.current = false;
           setIsLoading(false);
         }
       }
     },
-    [isSignedIn, userId, router, searchParams] // Dependencies for useCallback
+    [isSignedIn, userId, router, searchParams]
   );
 
-  // Effect for initial fetch and when auth state changes
   useEffect(() => {
     if (isSignedIn && userId) {
       if (!isPollingActiveRef.current && !isRegularFetchActiveRef.current) {
@@ -184,18 +170,19 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       isPollingActiveRef.current = false;
       isRegularFetchActiveRef.current = false;
     }
-  }, [isSignedIn, userId, fetchSubscriptionStatus]); // fetchSubscriptionStatus is stable
+  }, [isSignedIn, userId, fetchSubscriptionStatus]);
 
-  // Effect to handle redirect from Stripe Checkout or Portal
   useEffect(() => {
     let actionTaken = false;
     const shouldPoll = searchParams.has("subscription_success") || searchParams.has("from_portal");
     const wasCanceled = searchParams.has("subscription_canceled");
 
     if (shouldPoll) {
-      if (!isPollingActiveRef.current && !isRegularFetchActiveRef.current) { // Only start if not already fetching/polling
+      if (!isPollingActiveRef.current && !isRegularFetchActiveRef.current) {
         if (searchParams.has("subscription_success")) {
-            toast.success("Subscription successful! Your Pro plan is now active.", { autoClose: 5000 });
+            toast.success("Subscription successful! Your Pro plan is now active.", {
+              autoClose: 5000,
+            });
         }
         fetchSubscriptionStatus({ forcePolling: true, attempts: 1 });
         actionTaken = true;
@@ -205,9 +192,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       actionTaken = true;
     }
 
-    // URL cleanup if an action was taken and polling is NOT active (or has finished)
-    // For cancel, polling is not active, so cleanup immediately.
-    // For success/portal, cleanup is handled in fetchSubscriptionStatus's finally block.
     if (actionTaken && wasCanceled && !isPollingActiveRef.current) {
         const currentPath = window.location.pathname;
         const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -221,9 +205,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
           { scroll: false }
         );
     }
-  }, [searchParams, router, fetchSubscriptionStatus]); // fetchSubscriptionStatus is stable
+  }, [searchParams, router, fetchSubscriptionStatus]);
 
-  // Effect for syncing user with DB on Clerk user change
   useEffect(() => {
     const syncUserWithDb = async () => {
       if (
@@ -231,14 +214,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         clerkUser?.id &&
         clerkUser.primaryEmailAddress?.emailAddress
       ) {
-        console.log('%%%%% CONTEXT_SYNC: Preparing to POST to /api/user/sync for user:', clerkUser.id);
+        // console.log('%%%%% CONTEXT_SYNC: Preparing to POST to /api/user/sync for user:', clerkUser.id);
         try {
-          const syncResponse = await fetch("/api/user/sync", { // FIXED: Added method, headers, body
+          const syncResponse = await fetch("/api/user/sync", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              // clerkUserId from auth() on server-side for security.
-              // Only send data that Clerk provides and you want to sync.
               email: clerkUser.primaryEmailAddress.emailAddress,
               firstName: clerkUser.firstName,
               lastName: clerkUser.lastName,
@@ -246,19 +227,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             }),
           });
           if (!syncResponse.ok) {
-            // Handle non-OK responses if needed, e.g., log an error
             const errorData = await syncResponse.json().catch(() => ({}));
             console.error("CONTEXT_SYNC_ERROR: /api/user/sync failed:", syncResponse.status, errorData.error);
           }
-        } catch (error: unknown) { // FIXED: 'any' to 'unknown'
+        } catch (error: unknown) {
            console.error("CONTEXT_SYNC_ERROR: Exception during /api/user/sync POST:", error instanceof Error ? error.message : error);
         }
       }
     };
-    if (clerkUser?.id) { // Ensure clerkUser is loaded
+    if (clerkUser?.id) {
         syncUserWithDb();
     }
-  }, [isSignedIn, clerkUser]); // Dependencies for this effect
+  }, [isSignedIn, clerkUser]);
 
   const isProUser = !isLoading && subscriptionStatus === "active";
 
