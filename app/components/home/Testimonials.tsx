@@ -18,14 +18,14 @@ export default function Testimonials() {
     {
       name: "Sarah Chen",
       role: "AI Researcher",
-      content: "NovaAI has the most intuitive interface I've ever used. It understands context like no other, truly accelerating my research.",
+      content: "NovaAI has the most intuitive interface I&apos;ve ever used. It understands context like no other, truly accelerating my research.",
       avatar: "/av2.avif",
       highlightColor: "purple"
     },
     {
       name: "Marcus Rodriguez",
       role: "Lead Developer",
-      content: "Game-changing for my development workflow. NovaAI's code understanding and generation capabilities are phenomenal. A true productivity booster!",
+      content: "Game-changing for my development workflow. NovaAI&apos;s code understanding and generation capabilities are phenomenal. A true productivity booster!",
       avatar: "/av3.avif",
       highlightColor: "blue"
     },
@@ -99,7 +99,7 @@ export default function Testimonials() {
             Loved by Innovators
           </h2>
           <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
-            See what forward-thinkers and creators are saying about their NovaAI experience. It's more than an assistant; it's a partner in thought.
+            See what forward-thinkers and creators are saying about their NovaAI experience. It&apos;s more than an assistant; it&apos;s a partner in thought.
           </p>
         </motion.div>
 
