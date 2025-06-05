@@ -1,5 +1,5 @@
 // app/components/home/Testimonials.tsx
-"use client"; // Ensure this is at the top
+"use client"; 
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -19,26 +19,25 @@ export default function Testimonials() {
       name: "Sarah Chen",
       role: "AI Researcher",
       content: "NovaAI has the most intuitive interface I've ever used. It understands context like no other, truly accelerating my research.",
-      avatar: "/av2.avif", // FIXED: Removed /public prefix
+      avatar: "/av2.avif",
       highlightColor: "purple"
     },
     {
       name: "Marcus Rodriguez",
       role: "Lead Developer",
       content: "Game-changing for my development workflow. NovaAI's code understanding and generation capabilities are phenomenal. A true productivity booster!",
-      avatar: "/av3.avif", // FIXED: Removed /public prefix
+      avatar: "/av3.avif",
       highlightColor: "blue"
     },
     {
       name: "Elena Kowalski",
       role: "Content Strategist",
       content: "Finally, an AI that gets creative nuance! My content brainstorming and drafting productivity has skyrocketed with NovaAI. Highly recommended.",
-      avatar: "/av1.avif", // FIXED: Removed /public prefix
+      avatar: "/av1.avif",
       highlightColor: "emerald"
     }
   ];
 
-  // ... rest of your component code remains the same
   const getAvatarBgGradient = (color: string): string => {
     switch (color) {
       case "purple":
@@ -128,14 +127,14 @@ export default function Testimonials() {
               >
                 {testimonial.avatar.startsWith('/') || testimonial.avatar.startsWith('http') ? (
                   <div className="relative mr-4">
-                     <Image
-                        src={testimonial.avatar} // This path is now correct (e.g., /av2.avif)
-                        alt={testimonial.name}
-                        width={56}
-                        height={56}
-                        className="w-14 h-14 rounded-full object-cover shadow-lg ring-2 ring-[var(--border-primary)] group-hover:ring-[var(--accent-purple)] transition-all duration-300"
-                      />
-                      <span className={`absolute -bottom-1 -right-1 block h-4 w-4 rounded-full border-2 border-[var(--card-bg)] bg-gradient-to-tr ${getAvatarBgGradient(testimonial.highlightColor)} shadow-sm`}></span>
+                    <Image
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-full object-cover shadow-lg ring-2 ring-[var(--border-primary)] group-hover:ring-[var(--accent-purple)] transition-all duration-300"
+                    />
+                    <span className={`absolute -bottom-1 -right-1 block h-4 w-4 rounded-full border-2 border-[var(--card-bg)] bg-gradient-to-tr ${getAvatarBgGradient(testimonial.highlightColor)} shadow-sm`}></span>
                   </div>
                 ) : (
                   <div className={`relative w-14 h-14 bg-gradient-to-br ${getAvatarBgGradient(testimonial.highlightColor)} rounded-full flex items-center justify-center text-white text-xl font-semibold mr-4 shadow-lg ring-2 ring-[var(--border-primary)] group-hover:ring-[var(--accent-purple)] transition-all duration-300`}>
