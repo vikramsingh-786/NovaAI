@@ -1,9 +1,11 @@
+// lib/aiService.ts
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { File as FormidableFile } from 'formidable';
 import { extractTextFromFile } from './fileProcessor'; 
 import type { Message } from "@/types"; 
 
 let genAI: GoogleGenerativeAI | null = null;
+
 try {
   const apiKey = process.env.GEMINI_API_KEY;
   if (apiKey) {
@@ -58,7 +60,8 @@ export async function getAIResponseStream(
       }
     }
 
-    const modelName = isImageFile ? "gemini-1.5-flash-latest" : "gemini-1.5-flash-latest";
+    // ✅ Hardcoded model
+    const modelName = "gemini-2.5-pro";
 
     const model = genAI.getGenerativeModel({
       model: modelName,
@@ -74,27 +77,27 @@ export async function getAIResponseStream(
     });
 
     const historyForPrompt = conversationHistory
-      .slice(-10) 
-      .filter(msg => !(msg.type === "assistant" && msg.content.startsWith("🤖")) && !(msg.type === "assistant" && msg.content.startsWith("🛡️"))) // Filter out previous error messages
+      .slice(-10)
+      .filter(msg => !(msg.type === "assistant" && msg.content.startsWith("🤖")) && !(msg.type === "assistant" && msg.content.startsWith("🛡️")))
       .map(msg => ({
         role: msg.type === "user" ? "user" : "model",
         parts: [{ text: msg.content }],
       }));
 
     const chatSession = model.startChat({
-        history: historyForPrompt,
+      history: historyForPrompt,
     });
 
     let fullPrompt = userInput;
     if (uploadedFile && !isImageFile) {
-        fullPrompt = `The user has uploaded a file named "${uploadedFile.originalFilename}".\nFile Content:\n${fileContentForPrompt}\n\nUser's message related to this file: ${userInput}`;
+      fullPrompt = `The user has uploaded a file named "${uploadedFile.originalFilename}".\nFile Content:\n${fileContentForPrompt}\n\nUser's message related to this file: ${userInput}`;
     } else if (uploadedFile && isImageFile) {
-        fullPrompt = `The user has uploaded an image named "${uploadedFile.originalFilename}". User's message related to this image: ${userInput}`;
+      fullPrompt = `The user has uploaded an image named "${uploadedFile.originalFilename}". User's message related to this image: ${userInput}`;
     }
 
     const streamRequest = isImageFile && imageDataForApi
-        ? [fullPrompt, imageDataForApi]
-        : [fullPrompt];
+      ? [fullPrompt, imageDataForApi]
+      : [fullPrompt];
 
     const result = await chatSession.sendMessageStream(streamRequest);
 
@@ -102,10 +105,10 @@ export async function getAIResponseStream(
       if (chunk.candidates && chunk.candidates.length > 0) {
         const candidate = chunk.candidates[0];
         if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-            const part = candidate.content.parts[0];
-            if (part.text) {
-                sendChunk(part.text);
-            }
+          const part = candidate.content.parts[0];
+          if (part.text) {
+            sendChunk(part.text);
+          }
         }
       }
     }
