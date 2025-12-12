@@ -61,7 +61,7 @@ export async function getAIResponseStream(
     }
 
     // ✅ Hardcoded model
-    const modelName = "gemini-2.5-pro";
+    const modelName = "gemini-2.5-flash";
 
     const model = genAI.getGenerativeModel({
       model: modelName,
